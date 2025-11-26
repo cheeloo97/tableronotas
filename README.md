@@ -1,8 +1,8 @@
-# 🚨 Tablero de Notas
+#  Tablero de Notas
 
 Tablero de notas colaborativo que funciona directamente desde GitHub Pages.
 
-## 🎯 Características
+##  Características
 
 - ✅ **Sin servidor** - Funciona 100% en el navegador
 - ✅ **Tiempo real** - Sincronización entre dispositivos
@@ -11,32 +11,32 @@ Tablero de notas colaborativo que funciona directamente desde GitHub Pages.
 - ✅ **Persistencia** - Datos guardados localmente
 - ✅ **Colaborativo** - Múltiples usuarios simultáneos
 
-## 🚀 Uso Rápido
+##  Uso Rápido
 
 1. **Abre la aplicación:** `https://tuusuario.github.io/tablero-notas`
 2. **Vista TV:** `https://tuusuario.github.io/tablero-notas/tv.html`
 3. **¡Listo!** Las notas se sincronizan automáticamente
 
-## 📱 URLs
+##  URLs
 
 - **Panel Principal:** `index.html`
 - **Vista TV:** `tv.html`
 
-## 🛠 Tecnologías
+##  Tecnologías
 
 - HTML5, CSS3, JavaScript Vanilla
 - LocalStorage para persistencia
 - Grid CSS para diseño responsive
 - Sin dependencias externas
 
-## 🔄 Sincronización
+## Sincronización
 
 - Las notas se guardan en el localStorage del navegador
 - Se sincronizan entre pestañas del mismo dispositivo
 - Cada dispositivo tiene su propia copia
 - Ideal para uso en la misma ubicación física
 
-## 📖 Instrucciones
+##  Instrucciones
 
 1. **Agregar nota:** Click en "Agregar Nota"
 2. **Editar:** Click en cualquier nota y escribir
@@ -44,7 +44,7 @@ Tablero de notas colaborativo que funciona directamente desde GitHub Pages.
 4. **Eliminar:** Click en la X de la nota
 5. **Vista TV:** Abrir `tv.html` en el televisor
 
-## 🌟 Ventajas
+##  Ventajas
 
 - ✅ No requiere instalación
 - ✅ Funciona offline
@@ -52,6 +52,6 @@ Tablero de notas colaborativo que funciona directamente desde GitHub Pages.
 - ✅ Compatible con cualquier navegador
 - ✅ Gratuito y de código abierto
 
-## 📄 Licencia
+##  Licencia
 
 MIT License - Libre para uso y modificación.
