@@ -585,18 +585,46 @@
     <script>
       class NoteBoard {
         constructor() {
-          this.notes = this.loadNotesFromStorage();
+          this.notes = [];
           this.selectedNoteId = null;
           this.initializeEventListeners();
-          this.renderNotes();
+          this.loadNotesFromGitHub();
 
-          // Sincronización entre pestañas
-          window.addEventListener("storage", (e) => {
-            if (e.key === "tableroNotas") {
-              this.notes = JSON.parse(e.newValue || "[]");
-              this.renderNotes();
-            }
-          });
+          // Verificar cambios cada 5 segundos
+          setInterval(() => this.loadNotesFromGitHub(), 5000);
+        }
+
+        async loadNotesFromGitHub() {
+          try {
+            // Cargar desde el archivo notes.json en GitHub
+            const response = await fetch("./notes.json?t=" + Date.now());
+
+            if (!response.ok) throw new Error("Error cargando notas");
+
+            const notes = await response.json();
+            this.notes = notes;
+            this.renderNotes();
+            this.updateConnectionStatus(true);
+          } catch (error) {
+            console.error("Error cargando notas:", error);
+            this.updateConnectionStatus(false);
+          }
+        }
+
+        // Método para que los usuarios descarguen las notas actualizadas
+        downloadUpdatedNotes() {
+          const dataStr = JSON.stringify(this.notes, null, 2);
+          const dataBlob = new Blob([dataStr], { type: "application/json" });
+
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(dataBlob);
+          link.download = "notes.json";
+          link.click();
+
+          this.showStatus(
+            "Archivo notes.json listo para descargar. Súbelo a GitHub para sincronizar.",
+            "success"
+          );
         }
 
         initializeEventListeners() {
@@ -610,13 +638,25 @@
               mainContent.classList.toggle("expanded");
             });
 
-          // Botones principales
+          // Botones principales (MODIFICADO)
           document
             .getElementById("addNoteBtn")
             .addEventListener("click", () => this.showAddNoteModal());
           document
             .getElementById("clearAllBtn")
             .addEventListener("click", () => this.clearAllNotes());
+
+          // Agregar botón de sincronización
+          const actionButtons = document.querySelector(".action-buttons");
+          const syncButton = document.createElement("button");
+          syncButton.className = "btn-primary";
+          syncButton.id = "syncBtn";
+          syncButton.textContent = "🔄 Sincronizar";
+          actionButtons.appendChild(syncButton);
+
+          document
+            .getElementById("syncBtn")
+            .addEventListener("click", () => this.downloadUpdatedNotes());
 
           // Modal
           document
@@ -662,30 +702,7 @@
             });
         }
 
-        loadNotesFromStorage() {
-          try {
-            return JSON.parse(localStorage.getItem("tableroNotas") || "[]");
-          } catch (error) {
-            console.error("Error cargando notas:", error);
-            return [];
-          }
-        }
-
-        saveNotesToStorage() {
-          try {
-            localStorage.setItem("tableroNotas", JSON.stringify(this.notes));
-            // Disparar evento para sincronizar otras pestañas
-            window.dispatchEvent(
-              new StorageEvent("storage", {
-                key: "tableroNotas",
-                newValue: JSON.stringify(this.notes),
-              })
-            );
-          } catch (error) {
-            console.error("Error guardando notas:", error);
-            this.showStatus("Error al guardar", "error");
-          }
-        }
+        // ... (MANTENER TODOS TUS MÉTODOS EXISTENTES: calculateNoteSize, autoResizeTextarea, etc.)
 
         calculateNoteSize(content) {
           const lineBreaks = (content.match(/\n/g) || []).length;
@@ -721,7 +738,6 @@
 
           const newSize = `${currentSize}px`;
           note.fontSize = newSize;
-          this.saveNotesToStorage();
 
           const noteElement = document.querySelector(
             `.note[data-id="${this.selectedNoteId}"]`
@@ -740,7 +756,6 @@
           const note = this.notes.find((n) => n.id === this.selectedNoteId);
           if (note) {
             note.backgroundColor = color;
-            this.saveNotesToStorage();
           }
           const noteElement = document.querySelector(
             `.note[data-id="${this.selectedNoteId}"]`
@@ -755,7 +770,6 @@
           const note = this.notes.find((n) => n.id === this.selectedNoteId);
           if (note) {
             note.textColor = color;
-            this.saveNotesToStorage();
           }
           const noteElement = document.querySelector(
             `.note[data-id="${this.selectedNoteId}"]`
@@ -780,8 +794,6 @@
             note.textDecoration =
               note.textDecoration === "underline" ? "none" : "underline";
           }
-
-          this.saveNotesToStorage();
 
           const noteElement = document.querySelector(
             `.note[data-id="${this.selectedNoteId}"]`
@@ -856,10 +868,12 @@
             };
 
             this.notes.push(newNote);
-            this.saveNotesToStorage();
             this.renderNotes();
             this.hideAddNoteModal();
-            this.showStatus("Nota agregada correctamente", "success");
+            this.showStatus(
+              'Nota agregada. Usa "Sincronizar" para guardar en todos los dispositivos.',
+              "success"
+            );
           }
         }
 
@@ -868,9 +882,11 @@
             this.selectedNoteId = null;
           }
           this.notes = this.notes.filter((note) => note.id !== id);
-          this.saveNotesToStorage();
           this.renderNotes();
-          this.showStatus("Nota eliminada", "success");
+          this.showStatus(
+            'Nota eliminada. Usa "Sincronizar" para actualizar.',
+            "success"
+          );
         }
 
         clearAllNotes() {
@@ -879,9 +895,11 @@
           ) {
             this.selectedNoteId = null;
             this.notes = [];
-            this.saveNotesToStorage();
             this.renderNotes();
-            this.showStatus("Todas las notas eliminadas", "success");
+            this.showStatus(
+              'Todas las notas eliminadas. Usa "Sincronizar" para actualizar.',
+              "success"
+            );
           }
         }
 
@@ -903,28 +921,28 @@
             }
 
             noteElement.innerHTML = `
-                        <div class="note-header">
-                            <span class="note-time" style="color: ${
-                              note.textColor || "#666"
-                            }; font-size: ${
+                    <div class="note-header">
+                        <span class="note-time" style="color: ${
+                          note.textColor || "#666"
+                        }; font-size: ${
               parseInt(note.fontSize || "28") * 0.6
             }px; font-weight: ${
               note.fontWeight || "normal"
             }; text-decoration: ${note.textDecoration || "none"}">${
               note.timestamp
             }</span>
-                            <button class="note-close" data-id="${
-                              note.id
-                            }" title="Eliminar nota">&times;</button>
-                        </div>
-                        <textarea class="note-content" data-id="${note.id}" 
-                            style="color: ${note.textColor || "#222222"}; 
-                                   font-size: ${note.fontSize || "28px"}; 
-                                   font-weight: ${note.fontWeight || "normal"}; 
-                                   text-decoration: ${
-                                     note.textDecoration || "none"
-                                   };">${note.content}</textarea>
-                    `;
+                        <button class="note-close" data-id="${
+                          note.id
+                        }" title="Eliminar nota">&times;</button>
+                    </div>
+                    <textarea class="note-content" data-id="${note.id}" 
+                        style="color: ${note.textColor || "#222222"}; 
+                               font-size: ${note.fontSize || "28px"}; 
+                               font-weight: ${note.fontWeight || "normal"}; 
+                               text-decoration: ${
+                                 note.textDecoration || "none"
+                               };">${note.content}</textarea>
+                `;
 
             container.appendChild(noteElement);
             const noteContent = noteElement.querySelector(".note-content");
@@ -945,7 +963,6 @@
                 note.content = e.target.value;
                 note.timestamp = new Date().toLocaleString("es-ES");
                 note.noteSize = this.calculateNoteSize(e.target.value);
-                this.saveNotesToStorage();
               }
               this.autoResizeTextarea(e.target);
             });
@@ -958,7 +975,19 @@
           statusElement.className = `status ${type}`;
           setTimeout(() => {
             statusElement.className = "status";
-          }, 3000);
+          }, 5000);
+        }
+
+        updateConnectionStatus(connected) {
+          const dot = document.getElementById("connectionDot");
+          const status = document.getElementById("connectionStatus");
+          if (connected) {
+            dot.className = "connection-dot";
+            status.textContent = "Conectado";
+          } else {
+            dot.className = "connection-dot disconnected";
+            status.textContent = "Desconectado";
+          }
         }
       }
 
