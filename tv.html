@@ -104,20 +104,20 @@
     <script>
       function loadNotes() {
         try {
-          const notes = JSON.parse(
-            localStorage.getItem("tableroNotas") || "[]"
-          );
-          const grid = document.getElementById("notesGrid");
+          fetch("./notes.json?t=" + Date.now())
+            .then((response) => response.json())
+            .then((notes) => {
+              const grid = document.getElementById("notesGrid");
 
-          if (notes.length === 0) {
-            grid.innerHTML =
-              '<div class="no-notes">No hay notas disponibles</div>';
-            return;
-          }
+              if (notes.length === 0) {
+                grid.innerHTML =
+                  '<div class="no-notes">No hay notas disponibles</div>';
+                return;
+              }
 
-          grid.innerHTML = notes
-            .map(
-              (note) => `
+              grid.innerHTML = notes
+                .map(
+                  (note) => `
                     <div class="note" style="
                         background: ${note.backgroundColor || "#ffffff"};
                         border-left-color: ${note.borderColor || "#122247"};
@@ -138,11 +138,12 @@
                         </div>
                     </div>
                 `
-            )
-            .join("");
+                )
+                .join("");
 
-          document.getElementById("updateTime").textContent =
-            new Date().toLocaleTimeString("es-ES");
+              document.getElementById("updateTime").textContent =
+                new Date().toLocaleTimeString("es-ES");
+            });
         } catch (error) {
           console.error("Error cargando notas:", error);
         }
